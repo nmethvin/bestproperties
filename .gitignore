@@ -1,0 +1,14 @@
+*.swp
+.vscode
+.env*
+__pycache__/
+*.py[cod]
+Pipfile*
+*.log
+*.DS_Store
+backend/htmlcov
+backend/.coverage
+backend/staticfiles/silk
+geckodriver
+*.zip
+pyrightconfig.json
