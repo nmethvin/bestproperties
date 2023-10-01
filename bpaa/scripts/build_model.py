@@ -104,7 +104,19 @@ def build_model():
     joblib.dump(scaler, "scaler.pkl")
 
 
-def run_model(request):
+def run_model(request,
+              max_price='',
+              min_price='',
+              max_distance='',
+              built_after='',
+              built_before='',
+              max_beds='',
+              min_beds='',
+              max_bath='',
+              min_bath='',
+              max_sqft='',
+              min_sqft='',
+              num_of_results=''):
     properties = Property.objects.annotate(price_per_sqft=F('price') /
                                            F('sq_ft'))
     total_properties = properties.count()
@@ -120,6 +132,52 @@ def run_model(request):
     top_threshold = properties_ordered[top_10_percent_index].price_per_sqft
     properties = properties.filter(price_per_sqft__gt=bottom_threshold,
                                    price_per_sqft__lt=top_threshold)
+    if min_price:  # Check if min_price is not empty
+        properties = properties.filter(
+            price__gte=float(min_price)
+        )  # Filter properties with price greater than or equal to min_price
+
+    if max_price:  # Check if max_price is not empty
+        properties = properties.filter(
+            price__lte=float(max_price)
+        )  # Filter properties with price less than or equal to max_price
+    if max_distance:  # Check if min_price is not empty
+        properties = properties.filter(
+            dist__lte=float(max_distance) * 69
+        )  # Filter properties with price greater than or equal to min_price
+
+    if built_after:  # Check if max_price is not empty
+        properties = properties.filter(
+            year__gt=float(built_after)
+        )  # Filter properties with price less than or equal to max_price
+    if built_before:  # Check if max_price is not empty
+        properties = properties.filter(
+            year__lt=float(built_before)
+        )  # Filter properties with price less than or equal to max_price
+    if max_beds:  # Check if max_price is not empty
+        properties = properties.filter(
+            beds__lte=float(max_beds)
+        )  # Filter properties with price less than or equal to max_price
+    if min_beds:  # Check if max_price is not empty
+        properties = properties.filter(
+            beds__gte=float(max_beds)
+        )  # Filter properties with price less than or equal to max_price
+    if max_bath:  # Check if max_price is not empty
+        properties = properties.filter(
+            bath__lte=float(max_bath)
+        )  # Filter properties with price less than or equal to max_price
+    if min_bath:  # Check if max_price is not empty
+        properties = properties.filter(
+            bath__gte=float(min_bath)
+        )  # Filter properties with price less than or equal to max_price
+    if max_sqft:  # Check if max_price is not empty
+        properties = properties.filter(
+            sq_ft__lte=float(max_sqft)
+        )  # Filter properties with price less than or equal to max_price
+    if min_sqft:  # Check if max_price is not empty
+        properties = properties.filter(
+            sq_ft__gte=float(min_sqft)
+        )  # Filter properties with price less than or equal to max_price
     regions_df = pd.DataFrame(list(Region.objects.all().values()))
 
     # properties = Property.objects.all().values()
@@ -156,13 +214,15 @@ def run_model(request):
                    for actual, predicted in zip(actual_prices, predictions)]
 
     # Get indices of top 10 differences
-    top_10_indices = sorted(range(len(differences)),
-                            key=lambda i: differences[i],
-                            reverse=True)[:10]
+    if not num_of_results:
+        num_of_results = 10
+    top_n_indices = sorted(range(len(differences)),
+                           key=lambda i: differences[i],
+                           reverse=True)[:int(num_of_results)]
 
     # Print the addresses for the top 10 differences
     result = []
-    for idx in top_10_indices:
+    for idx in top_n_indices:
         actual = actual_prices[idx]
         predicted = predictions[idx]
         difference = differences[idx]
@@ -174,13 +234,15 @@ def run_model(request):
             predicted = predicted[0]
         if isinstance(difference, numpy.ndarray) and difference.shape == (1, ):
             difference = difference[0]
+        address_url = addresses[idx].replace(
+            ', Austin, TX', ' Austin, TX').replace(' ', '-') + '_rb'
 
         result.append({
             'address': f'{addresses[idx]}',
             'price': f'${actual}',
             'pred': f'${predicted}',
             'difference': f'{difference*100}%',
-            'link': 'www.zillow.com'
+            'link': f'https://www.zillow.com/homes/{address_url}'
         })
         """
         result.append(
