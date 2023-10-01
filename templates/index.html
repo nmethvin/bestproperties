@@ -17,33 +17,49 @@
   </head>
 
   <body>
+    <div class="p-3 mb-2 bg-light text-dark">
     <div class="container-fluid">
-      <div class="row">
-        <!-- Filters section -->
-        <div class="col-md-3">
-          <button
-            class="btn btn-primary"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#filters"
-            aria-expanded="true"
-            aria-controls="filters"
-          >
-            Toggle Filters
-          </button>
-          <div class="collapse show mt-2" id="filters">
+    <div class="row">
+        <div class="col-12 text-center my-4">
+            <h1>Best Austin Property Investments</h1>
+        </div>
+    </div>
+        <!-- Horizontal Line -->
+    <div class="row">
+        <div class="col-12">
+            <hr>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Filters & Run Model Column -->
+        <div class="col-md-2">
+            <form method="post" action="{% url 'run_model' %}">
+                <!-- Toggle Filters & Run Model buttons -->
+                <div class="d-flex justify-content-between mb-3">
+                    <button class="btn btn-secondary btn-lg" type="button" data-bs-toggle="collapse" data-bs-target="#filtersContainer" aria-expanded="false" aria-controls="filtersContainer">
+                        Filters
+                    </button>
+                    <input type="submit" value="Run Model" class="btn btn-outline-success btn-lg">
+                </div>
+          <div class="collapse show mt-2" id="filtersContainer">
             <form method="post" action="{% url 'run_model' %}" class="mb-3">
               {% csrf_token %}
-              <!-- Submit button -->
-              <button type="submit" class="btn btn-primary mt-2">
-                Run Model
-              </button>
 
+              <!-- # of Results -->
+              <div class="mb-3">
+                <label for="num_of_results" class="form-label"># of Results</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="num_of_results"
+                  name="num_of_results"
+                />
+              </div>
               <!-- Max Price -->
               <div class="mb-3">
                 <label for="maxPrice" class="form-label">Max Price</label>
                 <input
-                  type="text"
+                  type="number"
                   class="form-control"
                   id="maxPrice"
                   name="max_price"
@@ -54,7 +70,7 @@
               <div class="mb-3">
                 <label for="minPrice" class="form-label">Min Price</label>
                 <input
-                  type="text"
+                  type="number"
                   class="form-control"
                   id="minPrice"
                   name="min_price"
@@ -66,7 +82,7 @@
                   >Max Distance from Downtown</label
                 >
                 <input
-                  type="text"
+                  type="number"
                   class="form-control"
                   id="maxDistance"
                   name="max_distance"
@@ -77,7 +93,7 @@
               <div class="mb-3">
                 <label for="builtAfter" class="form-label">Built After</label>
                 <input
-                  type="text"
+                  type="number"
                   class="form-control"
                   id="builtAfter"
                   name="built_after"
@@ -88,7 +104,7 @@
               <div class="mb-3">
                 <label for="builtBefore" class="form-label">Built Before</label>
                 <input
-                  type="text"
+                  type="number"
                   class="form-control"
                   id="builtBefore"
                   name="built_before"
@@ -99,7 +115,7 @@
               <div class="mb-3">
                 <label for="maxBeds" class="form-label">Max Beds</label>
                 <input
-                  type="text"
+                  type="number"
                   class="form-control"
                   id="maxBeds"
                   name="max_beds"
@@ -107,10 +123,10 @@
               </div>
 
               <!-- Min Beds -->
-              <div class="mb-3">
+              <div class="mb-2">
                 <label for="minBeds" class="form-label">Min Beds</label>
                 <input
-                  type="text"
+                  type="number"
                   class="form-control"
                   id="minBeds"
                   name="min_beds"
@@ -121,7 +137,7 @@
               <div class="mb-3">
                 <label for="maxBath" class="form-label">Max Bath</label>
                 <input
-                  type="text"
+                  type="number"
                   class="form-control"
                   id="maxBath"
                   name="max_bath"
@@ -132,7 +148,7 @@
               <div class="mb-3">
                 <label for="minBath" class="form-label">Min Bath</label>
                 <input
-                  type="text"
+                  type="number"
                   class="form-control"
                   id="minBath"
                   name="min_bath"
@@ -143,7 +159,7 @@
               <div class="mb-3">
                 <label for="maxSqFt" class="form-label">Max Sq. Ft.</label>
                 <input
-                  type="text"
+                  type="number"
                   class="form-control"
                   id="maxSqFt"
                   name="max_sqft"
@@ -154,19 +170,23 @@
               <div class="mb-3">
                 <label for="minSqFt" class="form-label">Min Sq. Ft.</label>
                 <input
-                  type="text"
+                  type="number"
                   class="form-control"
                   id="minSqFt"
                   name="min_sqft"
                 />
               </div>
-            </form>
           </div>
+        </form>
         </div>
 
         <!-- Results section -->
         <div class="col-md-9">
-          <h5>Results</h5>
+        <div class="row">
+            <div class="col-12 text-center my-1">
+                <h3>Results</h3>
+            </div>
+        </div>
           <table class="table">
             <thead>
               <tr>
@@ -195,5 +215,6 @@
 
     <!-- Include Bootstrap's JavaScript library (optional but required for some Bootstrap components like modals) -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  </div>
   </body>
 </html>

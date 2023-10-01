@@ -239,9 +239,9 @@ def run_model(request,
 
         result.append({
             'address': f'{addresses[idx]}',
-            'price': f'${actual}',
-            'pred': f'${predicted}',
-            'difference': f'{difference*100}%',
+            'price': f'${actual:,}',
+            'pred': f'${round(predicted):,}',
+            'difference': f'{round(difference*100, 2)}%',
             'link': f'https://www.zillow.com/homes/{address_url}'
         })
         """
