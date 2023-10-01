@@ -1,4 +1,4 @@
-from bpaa.models import Property
+from bpaa.models import Property, Region
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -28,14 +28,20 @@ def build_model():
     top_threshold = properties_ordered[top_10_percent_index].price_per_sqft
     properties = properties.filter(price_per_sqft__gt=bottom_threshold,
                                    price_per_sqft__lt=top_threshold)
+    regions_df = pd.DataFrame(list(Region.objects.all().values()))
 
     # properties = Property.objects.all().values()
-    df = pd.DataFrame(list(properties.values()))
+    properties_df = pd.DataFrame(list(properties.values()))
+    df = pd.merge(properties_df,
+                  regions_df,
+                  left_on='region_id',
+                  right_on='id',
+                  suffixes=('', '_region'))
 
     # Split the data
     features = df.drop([
         'price', 'address', 'walk_score', 'transit_score', 'bike_score',
-        'long', 'lat', 'price_per_sqft'
+        'long', 'lat', 'price_per_sqft', 'name', 'coordinates'
     ],
         axis=1)  # Assuming 'price' is your target variable
     target = df['price']
@@ -59,7 +65,6 @@ def build_model():
     """
     model = Sequential([
         Dense(128, activation='relu', input_shape=(X_train.shape[1], )),
-        Dropout(0.2),
         Dense(128, activation='relu'),
         Dense(128, activation='relu'),
         Dense(64, activation='relu'),
@@ -99,7 +104,7 @@ def build_model():
     joblib.dump(scaler, "scaler.pkl")
 
 
-def run_model():
+def run_model(request):
     properties = Property.objects.annotate(price_per_sqft=F('price') /
                                            F('sq_ft'))
     total_properties = properties.count()
@@ -115,26 +120,36 @@ def run_model():
     top_threshold = properties_ordered[top_10_percent_index].price_per_sqft
     properties = properties.filter(price_per_sqft__gt=bottom_threshold,
                                    price_per_sqft__lt=top_threshold)
+    regions_df = pd.DataFrame(list(Region.objects.all().values()))
+
     # properties = Property.objects.all().values()
-    df = pd.DataFrame(list(properties.values()))
-    # df = pd.DataFrame.from_records(properties)
+    properties_df = pd.DataFrame(list(properties.values()))
+    df = pd.merge(properties_df,
+                  regions_df,
+                  left_on='region_id',
+                  right_on='id',
+                  suffixes=('', '_region'))
 
     # Split the data
     new_data = df.drop([
         'price', 'address', 'walk_score', 'transit_score', 'bike_score',
-        'long', 'lat', 'price_per_sqft'
+        'long', 'lat', 'price_per_sqft', 'name', 'coordinates'
     ],
         axis=1)  # Assuming 'price' is your target variable
     actual_prices = df['price']
     addresses = df['address']
-    loaded_model = tf.keras.models.load_model("property_price_model.h5")
-    loaded_scaler = joblib.load("scaler.pkl")
+    # loaded_model = tf.keras.models.load_model("property_price_model.h5")
+    # loaded_scaler = joblib.load("scaler.pkl")
+    loaded_model = tf.keras.models.load_model(
+        "/bestproperties/bpaa/property_price_model.h5")
+    loaded_scaler = joblib.load("/bestproperties/bpaa/scaler.pkl")
     # Assuming new_data is a new DataFrame with property features
     scaled_new_data = loaded_scaler.transform(new_data)
     predictions = loaded_model.predict(scaled_new_data)
-    mae = mean_absolute_error(actual_prices, predictions)
+    median_price = df['price'].median()
+    mae = mean_absolute_error(actual_prices, predictions) / median_price
     print(
-        f"Mean Absolute Error (MAE) between actual and projected prices: ${mae:.2f}"
+        f"Mean Absolute Percentage Error (MAPE) between actual and projected prices: ${mae:.2f}"
     )
     # print(predictions)
     differences = [(predicted - actual) / actual
@@ -146,6 +161,7 @@ def run_model():
                             reverse=True)[:10]
 
     # Print the addresses for the top 10 differences
+    result = []
     for idx in top_10_indices:
         actual = actual_prices[idx]
         predicted = predictions[idx]
@@ -159,6 +175,16 @@ def run_model():
         if isinstance(difference, numpy.ndarray) and difference.shape == (1, ):
             difference = difference[0]
 
-        print(
+        result.append({
+            'address': f'{addresses[idx]}',
+            'price': f'${actual}',
+            'pred': f'${predicted}',
+            'difference': f'{difference*100}%',
+            'link': 'www.zillow.com'
+        })
+        """
+        result.append(
             f"Address: {addresses[idx]}, Actual Price: ${actual}, Predicted Price: ${predicted}, Difference: {difference*100}%"
         )
+        """
+    return result

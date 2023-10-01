@@ -1,4 +1,4 @@
-from bpaa.models import Property
+from bpaa.models import Property, Region
 import requests
 import django
 import os
@@ -189,4 +189,47 @@ def get_location_data():
     data = response.json()
     for region in data:
         region = json.loads(region)
-        breakpoint()
+        coord = region['geometry']['coordinates'][0][0]
+        coord = tuple(tuple(x) for x in coord)
+        name = region['properties']['name']
+        crime_rating = region['properties']['c']
+        demo_rating = region['properties']['d']
+        real_estate_rating = region['properties']['r']
+        school_rating = region['properties']['s']
+        region = get_or_create_region(coord=coord,
+                                      name=name,
+                                      crime_rating=crime_rating,
+                                      demo_rating=demo_rating,
+                                      real_estate_rating=real_estate_rating,
+                                      school_rating=school_rating)
+
+
+def get_or_create_region(coord=[],
+                         name='',
+                         crime_rating=0,
+                         demo_rating=0,
+                         real_estate_rating=0,
+                         school_rating=0):
+    try:
+        region = Region.objects.get(name=name)
+        if coord != region.coordinates:
+            region.coordinates = coord
+            region.save()
+    except:
+        region = Region.objects.create(coordinates=coord,
+                                       name=name,
+                                       crime_rating=crime_rating,
+                                       demo_rating=demo_rating,
+                                       real_estate_rating=real_estate_rating,
+                                       school_rating=school_rating)
+    return region
+
+
+def assign_regions():
+    properties = Property.objects.all()
+    for prop in properties:
+        region = Region.get_region_for_point(prop.long, prop.lat)
+        if region:
+            print(region)
+        prop.region = region
+        prop.save()
