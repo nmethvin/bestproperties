@@ -15,3 +15,7 @@ RUN pip install -r requirements.txt
 
 # Copy project
 COPY . .
+
+COPY ./bpaa/property_price_model.h5 /bestproperties/bpaa/property_price_model.h5
+COPY ./bpaa/scaler.pkl /bestproperties/bpaa/scaler.pkl
+
