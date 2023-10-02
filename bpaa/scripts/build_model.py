@@ -127,8 +127,7 @@ def run_model(request,
         bottom_10_percent_index].price_per_sqft
     top_threshold = properties_ordered[top_10_percent_index].price_per_sqft
     properties = properties.filter(price_per_sqft__gt=bottom_threshold,
-                                   price_per_sqft__lt=top_threshold,
-                                   region__isnull=False)
+                                   price_per_sqft__lt=top_threshold)
     if min_price:  # Check if min_price is not empty
         properties = properties.filter(
             price__gte=float(min_price)
