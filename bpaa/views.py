@@ -7,7 +7,6 @@ def index(request):
     data_list = []
 
     if request.method == 'POST':
-        # If the form is submitted, run the model
         data_list = return_run_model(request)
 
     context = {'data_list': data_list}
@@ -18,7 +17,6 @@ def index(request):
 def run_model(request):
     if request.method == 'POST':
         max_price = request.POST.get('max_price')
-        print('maxprice:' + max_price)
         min_price = request.POST.get('min_price')
         max_distance = request.POST.get('max_distance')
         built_after = request.POST.get('built_after')

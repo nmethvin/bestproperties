@@ -6,6 +6,8 @@ import sys
 import math
 import json
 
+RAPID_API_KEY = "bb283b7325msh5f9d1c8c6b91c54p106ad3jsnb53697f3760e"
+
 
 def get_property_data():
     total_listings = add_properties(offset=0)
@@ -27,7 +29,7 @@ def add_properties(offset=0):
     }
 
     headers = {
-        "X-RapidAPI-Key": "bb283b7325msh5f9d1c8c6b91c54p106ad3jsnb53697f3760e",
+        "X-RapidAPI-Key": RAPID_API_KEY,
         "X-RapidAPI-Host": "us-real-estate.p.rapidapi.com"
     }
 
@@ -226,10 +228,8 @@ def get_or_create_region(coord=[],
 
 
 def assign_regions():
-    properties = Property.objects.all()
+    properties = Property.objects.filter(region__isnull=True)
     for prop in properties:
         region = Region.get_region_for_point(prop.long, prop.lat)
-        if region:
-            print(region)
         prop.region = region
         prop.save()
