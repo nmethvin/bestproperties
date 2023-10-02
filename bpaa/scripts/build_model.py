@@ -2,7 +2,7 @@ from bpaa.models import Property, Region
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import median_absolute_error, mean_squared_error, mean_absolute_percentage_error, explained_variance_score
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout
@@ -27,7 +27,8 @@ def build_model():
         bottom_10_percent_index].price_per_sqft
     top_threshold = properties_ordered[top_10_percent_index].price_per_sqft
     properties = properties.filter(price_per_sqft__gt=bottom_threshold,
-                                   price_per_sqft__lt=top_threshold)
+                                   price_per_sqft__lt=top_threshold,
+                                   region__isnull=False)
     regions_df = pd.DataFrame(list(Region.objects.all().values()))
 
     # properties = Property.objects.all().values()
@@ -54,15 +55,6 @@ def build_model():
     scaler = StandardScaler().fit(X_train)
     X_train = scaler.transform(X_train)
     X_test = scaler.transform(X_test)
-    # print(X_train)
-    """
-    model = Sequential()
-    model.add(Dense(128, activation='relu', input_shape=(X_train.shape[1], )))
-    model.add(Dropout(0.2))
-    model.add(Dense(64, activation='relu'))
-    model.add(Dropout(0.2))
-    model.add(Dense(1))
-    """
     model = Sequential([
         Dense(128, activation='relu', input_shape=(X_train.shape[1], )),
         Dense(128, activation='relu'),
@@ -80,10 +72,10 @@ def build_model():
         Dense(1)
     ])
 
-    model.compile(optimizer='adam', loss='mean_squared_error')
+    model.compile(optimizer='rmsprop', loss='mean_absolute_percentage_error')
     model.fit(X_train,
               y_train,
-              epochs=1000,
+              epochs=500,
               batch_size=32,
               validation_data=(X_test, y_test))
 
@@ -95,10 +87,14 @@ def build_model():
     predictions = model.predict(X_test)
     # print(predictions)
 
-    mae = mean_absolute_error(y_test, predictions)
-    print(
-        f"Mean Absolute Error (MAE) between actual and projected prices: ${mae:.2f}"
-    )
+    mae = median_absolute_error(y_test, predictions)
+    mse = mean_squared_error(y_test, predictions)
+    mape = mean_absolute_percentage_error(y_test, predictions)
+    evs = explained_variance_score(y_test, predictions)
+    print(f"Median Absolute Error: {mae:.2f}")
+    print(f"Mean Squared Error: {mse:.2f}")
+    print(f"Mean Absolute Percentage Error: {mape:.2f}")
+    print(f"Explained Variance Score: {evs:.2f}")
 
     model.save("property_price_model.h5")
     joblib.dump(scaler, "scaler.pkl")
@@ -131,7 +127,8 @@ def run_model(request,
         bottom_10_percent_index].price_per_sqft
     top_threshold = properties_ordered[top_10_percent_index].price_per_sqft
     properties = properties.filter(price_per_sqft__gt=bottom_threshold,
-                                   price_per_sqft__lt=top_threshold)
+                                   price_per_sqft__lt=top_threshold,
+                                   region__isnull=False)
     if min_price:  # Check if min_price is not empty
         properties = properties.filter(
             price__gte=float(min_price)
@@ -205,9 +202,10 @@ def run_model(request,
     scaled_new_data = loaded_scaler.transform(new_data)
     predictions = loaded_model.predict(scaled_new_data)
     median_price = df['price'].median()
-    mae = mean_absolute_error(actual_prices, predictions) / median_price
+    mape = mean_absolute_percentage_error(actual_prices,
+                                          predictions) / median_price
     print(
-        f"Mean Absolute Percentage Error (MAPE) between actual and projected prices: ${mae:.2f}"
+        f"Mean Absolute Percentage Error (MAPE) between actual and projected prices: {mape:.2f}"
     )
     # print(predictions)
     differences = [(predicted - actual) / actual
@@ -244,9 +242,7 @@ def run_model(request,
             'difference': f'{round(difference*100, 2)}%',
             'link': f'https://www.zillow.com/homes/{address_url}'
         })
-        """
-        result.append(
+        print(
             f"Address: {addresses[idx]}, Actual Price: ${actual}, Predicted Price: ${predicted}, Difference: {difference*100}%"
         )
-        """
     return result

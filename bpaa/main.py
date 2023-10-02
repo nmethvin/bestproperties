@@ -3,10 +3,6 @@ from scripts.get_property_data import get_property_data, add_walk_scores, calc_d
 
 
 def main():
-    """
-    Parser for running all sports data from scripts
-    python get_sports_data.py --help for help
-    """
     parser = argparse.ArgumentParser(
         description="direct functions to be performed")
     parser.add_argument("--sc", nargs="*", help="scripts to run")
@@ -15,6 +11,7 @@ def main():
         sc = args.sc
     if 'get_property_data' in sc:
         get_property_data()
+        assign_regions()
     elif 'add_walk_scores' in sc:
         add_walk_scores()
     elif 'calc_distance' in sc:
